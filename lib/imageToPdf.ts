@@ -47,14 +47,42 @@ function loadImageDimensions(file: File): Promise<{ width: number; height: numbe
 }
 
 /**
- * Convert image file to data URL
+ * Convert image file to data URL with optional resize and quality
  */
-function imageToDataUrl(file: File): Promise<string> {
+function processImage(file: File, maxWidth: number, quality: number): Promise<{ dataUrl: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read image'));
-    reader.readAsDataURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      
+      // Resize if needed
+      if (maxWidth > 0 && width > maxWidth) {
+        height = (maxWidth / width) * height;
+        width = maxWidth;
+      }
+      
+      // Create canvas for resize and quality adjustment
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to JPEG with quality
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      URL.revokeObjectURL(img.src);
+      
+      resolve({ dataUrl, width, height });
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
   });
 }
 
@@ -115,26 +143,23 @@ export async function convertImagesToPdf(
   files: File[],
   settings: ImageToPdfSettings
 ): Promise<ConversionResult> {
-  const { pageSize, orientation, margin, imagesPerPage } = settings;
+  const { pageSize, orientation, margin, imagesPerPage, quality, maxWidth } = settings;
   const marginMm = MARGIN_SIZES[margin];
   
   // Load jsPDF
   const PDF = await getJsPDF();
   
-  // Load all images
+  // Load and process all images
   const images: { file: File; dataUrl: string; width: number; height: number }[] = [];
   
   for (const file of files) {
-    const [dataUrl, dimensions] = await Promise.all([
-      imageToDataUrl(file),
-      loadImageDimensions(file),
-    ]);
+    const processed = await processImage(file, maxWidth, quality);
     
     images.push({
       file,
-      dataUrl,
-      width: dimensions.width,
-      height: dimensions.height,
+      dataUrl: processed.dataUrl,
+      width: processed.width,
+      height: processed.height,
     });
   }
   

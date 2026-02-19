@@ -35,6 +35,8 @@ export interface ImageToPdfSettings {
   orientation: 'portrait' | 'landscape';
   margin: 'none' | 'small' | 'medium' | 'large';
   imagesPerPage: number;
+  quality: number;
+  maxWidth: number;
 }
 
 // PDF to Image Settings
@@ -63,6 +65,8 @@ export const defaultImageToPdfSettings: ImageToPdfSettings = {
   orientation: 'portrait',
   margin: 'medium',
   imagesPerPage: 1,
+  quality: 0.8,
+  maxWidth: 0,
 };
 
 export const defaultPdfToImageSettings: PdfToImageSettings = {

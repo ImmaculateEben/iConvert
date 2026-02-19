@@ -444,6 +444,36 @@ export default function Home() {
                   <option value="large">Large</option>
                 </select>
               </div>
+              
+              <div className={styles.settingRow}>
+                <label className={styles.settingLabel}>Quality: {Math.round(imageToPdfSettings.quality * 100)}%</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={imageToPdfSettings.quality * 100}
+                  onChange={(e) => setImageToPdfSettings({ ...imageToPdfSettings, quality: Number(e.target.value) / 100 })}
+                  className={styles.settingRange}
+                />
+              </div>
+              
+              <div className={styles.settingRow}>
+                <label className={styles.settingLabel}>
+                  Max Width: {imageToPdfSettings.maxWidth === 0 ? 'Original' : `${imageToPdfSettings.maxWidth}px`}
+                </label>
+                <select
+                  className={styles.settingSelect}
+                  value={imageToPdfSettings.maxWidth}
+                  onChange={(e) => setImageToPdfSettings({ ...imageToPdfSettings, maxWidth: Number(e.target.value) })}
+                >
+                  <option value={0}>Original</option>
+                  <option value={800}>800px</option>
+                  <option value={1024}>1024px</option>
+                  <option value={1280}>1280px</option>
+                  <option value={1600}>1600px</option>
+                  <option value={1920}>1920px</option>
+                </select>
+              </div>
             </div>
           )}
           
