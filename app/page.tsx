@@ -237,7 +237,7 @@ export default function Home() {
       <div className={styles.container}>
         {/* Header */}
         <header className={styles.header}>
-          <h1 className={styles.title}>File Converter</h1>
+          <h1 className={styles.title}>iConvert</h1>
           <p className={styles.subtitle}>
             Convert images and PDFs directly in your browser. No upload to server.
           </p>
