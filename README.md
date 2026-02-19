@@ -85,4 +85,4 @@ MIT
 
 ---
 
-Developed by [Immaculate Designs](https://Immaculatedesigns.com.ng)
+Developed by [Ebenezer](https://immaculatedesigns.com.ng) with ❤️
