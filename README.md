@@ -58,7 +58,7 @@ The application will be available at your Vercel deployment URL.
 
 ## 🚀 Live Demo
 
-Visit the live demo at: **https://i-convert-ebon.vercel.app**
+Visit the live demo at: **https://qr-code-generator-sigma-beige-66.vercel.app**
 
 ## 📦 Build & Deploy
 
@@ -85,4 +85,4 @@ MIT
 
 ---
 
-Developed by [Ebenezer](https://immaculatedesigns.com.ng) with ❤️
+Built with ❤️ by [Ebenezer](https://immaculatedesigns.com.ng)
