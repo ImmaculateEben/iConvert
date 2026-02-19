@@ -640,7 +640,7 @@ export default function Home() {
         <footer className={styles.footer}>
           <p>All conversions happen in your browser. Your files are never uploaded to any server.</p>
           <p className={styles.developedBy}>
-            Developed by <a href="https://immaculatedesigns.com.ng" target="_blank" rel="noopener noreferrer">Ebenezer</a> ❤️
+            Developed by <a href="https://immaculatedesigns.com.ng" target="_blank" rel="noopener noreferrer">Ebenezer</a> with ❤️
           </p>
         </footer>
       </div>
