@@ -68,7 +68,7 @@ export function checkFileSize(file: File, converterType: ConverterType): { valid
 /**
  * Create object URL for file preview
  */
-export function createPreviewUrl(file: File): string {
+export function createPreviewUrl(file: File | Blob): string {
   return URL.createObjectURL(file);
 }
 
