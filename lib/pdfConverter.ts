@@ -6,9 +6,15 @@ import { PdfToImageSettings } from './types';
 async function getPdfJs() {
   const pdfjsModule = await import('pdfjs-dist');
   const pdfjsLib = pdfjsModule.default || pdfjsModule;
-  // Set worker source from CDN
-  (pdfjsLib as any).GlobalWorkerOptions = (pdfjsLib as any).GlobalWorkerOptions || {};
-  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${(pdfjsLib as any).version}/pdf.worker.min.js`;
+  
+  // Set worker source from CDN - use Object.defineProperty for getter-only property
+  const version = (pdfjsLib as any).version || '4.0.379';
+  Object.defineProperty(pdfjsLib, 'GlobalWorkerOptions', {
+    value: { workerSrc: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js` },
+    writable: true,
+    configurable: true,
+  });
+  
   return pdfjsLib;
 }
 
