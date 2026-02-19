@@ -1,7 +1,7 @@
 .main {
   min-height: 100vh;
   padding: var(--space-8) var(--space-4);
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: var(--gradient-surface);
 }
 
 .container {
@@ -18,7 +18,10 @@
 .title {
   font-size: var(--text-3xl);
   font-weight: var(--font-bold);
-  color: var(--color-text);
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: var(--space-2);
 }
 
@@ -27,13 +30,41 @@
   color: var(--color-text-muted);
 }
 
+/* Theme Toggle */
+.themeToggle {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+  z-index: 100;
+  color: var(--color-text);
+}
+
+.themeToggle:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
 /* Section */
 .section {
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--space-6);
   margin-bottom: var(--space-6);
   box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .sectionTitle {
@@ -66,21 +97,24 @@
   flex: 1;
   min-width: 200px;
   padding: var(--space-4);
-  background: var(--color-bg);
+  background: var(--color-surface-alt);
   border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   text-align: left;
   transition: all var(--transition-fast);
+  color: var(--color-text);
 }
 
 .converterOption:hover {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
+  box-shadow: 0 0 0 4px var(--color-primary-glow);
 }
 
 .converterOptionActive {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
+  box-shadow: 0 0 0 4px var(--color-primary-glow);
 }
 
 .converterOptionLabel {
@@ -99,17 +133,18 @@
 /* Dropzone */
 .dropzone {
   border: 2px dashed var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--space-10);
   text-align: center;
   cursor: pointer;
   transition: all var(--transition-fast);
-  background: var(--color-bg);
+  background: var(--color-surface-alt);
 }
 
 .dropzone:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-light);
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
 }
 
 .fileInput {
@@ -126,7 +161,7 @@
 .dropzoneIcon {
   width: 48px;
   height: 48px;
-  color: var(--color-text-muted);
+  color: var(--color-accent);
 }
 
 .dropzoneText {
@@ -162,15 +197,16 @@
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--color-surface-alt);
   color: var(--color-text);
   font-size: var(--text-base);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .settingSelect:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
 .settingRange {
@@ -186,20 +222,27 @@
 .settingRange::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--color-primary);
   cursor: pointer;
+  box-shadow: 0 0 0 4px var(--color-primary-glow);
+  transition: transform var(--transition-fast);
+}
+
+.settingRange::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
 }
 
 .settingRange::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--color-primary);
   cursor: pointer;
   border: none;
+  box-shadow: 0 0 0 4px var(--color-primary-glow);
 }
 
 /* Convert Button */
@@ -215,23 +258,23 @@
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-4) var(--space-8);
-  background: var(--color-primary);
+  background: var(--gradient-hero);
   color: white;
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   transition: all var(--transition-fast);
-  min-width: 200px;
+  min-width: 220px;
+  box-shadow: 0 4px 14px var(--color-primary-glow);
 }
 
 .convertButton:hover:not(:disabled) {
-  background: var(--color-primary-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px var(--color-primary-glow);
 }
 
 .convertButton:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -245,9 +288,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* Error */
@@ -256,7 +297,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-3) var(--space-4);
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.1);
   border: 1px solid var(--color-error);
   border-radius: var(--radius-md);
   color: var(--color-error);
@@ -278,7 +319,7 @@
 
 .clearButton {
   padding: var(--space-2) var(--space-3);
-  background: var(--color-bg);
+  background: var(--color-surface-alt);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -287,9 +328,9 @@
 }
 
 .clearButton:hover {
-  background: var(--color-error);
+  background: var(--color-secondary);
   color: white;
-  border-color: var(--color-error);
+  border-color: var(--color-secondary);
 }
 
 .fileList {
@@ -303,14 +344,20 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
+}
+
+.fileItem:hover {
+  border-color: var(--color-primary);
 }
 
 .filePreview {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-border);
   flex-shrink: 0;
@@ -357,14 +404,14 @@
 }
 
 .removeButton:hover {
-  background: var(--color-error);
+  background: var(--color-secondary);
   color: white;
 }
 
 /* Results */
 .downloadAllButton {
   padding: var(--space-2) var(--space-4);
-  background: var(--color-secondary);
+  background: var(--color-accent);
   color: white;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
@@ -373,7 +420,8 @@
 }
 
 .downloadAllButton:hover {
-  background: var(--color-secondary-hover);
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
 }
 
 .resultList {
@@ -387,14 +435,20 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
+}
+
+.resultItem:hover {
+  border-color: var(--color-accent);
 }
 
 .resultPreview {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-border);
   flex-shrink: 0;
@@ -445,6 +499,7 @@
 
 .downloadButton:hover {
   background: var(--color-primary-hover);
+  transform: translateY(-1px);
 }
 
 /* Footer */
@@ -477,24 +532,24 @@
   .main {
     padding: var(--space-4) var(--space-2);
   }
-  
+
   .section {
     padding: var(--space-4);
   }
-  
+
   .converterOptions {
     flex-direction: column;
   }
-  
+
   .converterOption {
     min-width: 100%;
   }
-  
+
   .fileItem,
   .resultItem {
     flex-wrap: wrap;
   }
-  
+
   .fileInfo,
   .resultInfo {
     flex: 1 1 calc(100% - 80px);

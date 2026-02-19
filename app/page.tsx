@@ -38,6 +38,28 @@ const CONVERTER_OPTIONS: { value: ConverterType; label: string; description: str
 ];
 
 export default function Home() {
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    // Check for saved preference or system preference
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') {
+      setTheme(saved);
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+  }, [theme]);
+
   // State
   const [converterType, setConverterType] = useState<ConverterType>('image-to-image');
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -234,6 +256,16 @@ export default function Home() {
   
   return (
     <main className={styles.main}>
+      {/* Theme Toggle */}
+      <button
+        className={styles.themeToggle}
+        onClick={toggleTheme}
+        aria-label="Toggle dark mode"
+        title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+      >
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
+
       <div className={styles.container}>
         {/* Header */}
         <header className={styles.header}>

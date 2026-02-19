@@ -1,34 +1,46 @@
+/* ===== Light Mode (default) ===== */
 :root {
-  /* Primary Colors */
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-primary-light: #e0e7ff;
-  
-  /* Secondary Colors */
-  --color-secondary: #10b981;
-  --color-secondary-hover: #059669;
-  
-  /* Neutral Colors */
-  --color-bg: #f8fafc;
+  /* Primary – vibrant indigo/violet */
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-primary-light: #ede9fe;
+  --color-primary-glow: rgba(124, 58, 237, 0.25);
+
+  /* Accent – teal */
+  --color-accent: #14b8a6;
+  --color-accent-hover: #0d9488;
+  --color-accent-light: #ccfbf1;
+
+  /* Secondary – rose */
+  --color-secondary: #f43f5e;
+  --color-secondary-hover: #e11d48;
+
+  /* Neutral */
+  --color-bg: #f5f3ff;
   --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text: #1e293b;
-  --color-text-muted: #64748b;
-  
-  /* Status Colors */
+  --color-surface-alt: #faf5ff;
+  --color-border: #e2e0f0;
+  --color-text: #1e1b4b;
+  --color-text-muted: #6b7280;
+
+  /* Status */
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
-  
+
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(124, 58, 237, 0.08);
+  --shadow-lg: 0 12px 24px rgba(124, 58, 237, 0.12);
+
+  /* Gradient */
+  --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #14b8a6 100%);
+  --gradient-surface: linear-gradient(135deg, #f5f3ff 0%, #faf5ff 50%, #ecfdf5 100%);
+
   /* Font Family */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
+
   /* Font Sizes */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -37,13 +49,13 @@
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
-  
+
   /* Font Weights */
   --font-normal: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-  
+
   /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -54,20 +66,59 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
-  
+
   /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
   --radius-full: 9999px;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
+
+  color-scheme: light;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+  --color-primary: #a78bfa;
+  --color-primary-hover: #8b5cf6;
+  --color-primary-light: rgba(167, 139, 250, 0.15);
+  --color-primary-glow: rgba(167, 139, 250, 0.3);
+
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #14b8a6;
+  --color-accent-light: rgba(45, 212, 191, 0.15);
+
+  --color-secondary: #fb7185;
+  --color-secondary-hover: #f43f5e;
+
+  --color-bg: #0f0d1a;
+  --color-surface: #1a1726;
+  --color-surface-alt: #211e30;
+  --color-border: #2e2a40;
+  --color-text: #f1f0f7;
+  --color-text-muted: #9ca3af;
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.5);
+
+  --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #0d9488 100%);
+  --gradient-surface: linear-gradient(135deg, #0f0d1a 0%, #1a1726 50%, #0f1a17 100%);
+
+  color-scheme: dark;
+}
+
+/* ===== Reset ===== */
 * {
   box-sizing: border-box;
   padding: 0;
@@ -83,6 +134,7 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   line-height: 1.6;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 a {
@@ -107,7 +159,7 @@ input, select, textarea {
   font-size: inherit;
 }
 
-/* Utility Classes */
+/* ===== Utility Classes ===== */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -126,62 +178,38 @@ input, select, textarea {
   border: 0;
 }
 
-/* Animations */
+/* ===== Animations ===== */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.animate-fade-in {
-  animation: fadeIn var(--transition-normal) ease-out;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-slide-up {
-  animation: slideUp var(--transition-normal) ease-out;
-}
+.animate-fade-in { animation: fadeIn var(--transition-normal) ease-out; }
+.animate-slide-up { animation: slideUp var(--transition-normal) ease-out; }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+.animate-spin { animation: spin 1s linear infinite; }
 
-.animate-pulse {
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Scrollbar Styling */
+/* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
