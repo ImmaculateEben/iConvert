@@ -54,7 +54,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+The application will be available at your Vercel deployment URL.
+
+## 🚀 Live Demo
+
+Visit the live demo at: **https://iconvert.vercel.app**
 
 ## 📦 Build & Deploy
 
