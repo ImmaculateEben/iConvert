@@ -601,10 +601,20 @@ export default function Home() {
             <div className={styles.resultList}>
               {results.map((result) => {
                 const savings = calculateSavings(result.originalFile.size, result.outputSize);
+                const isPdfResult = result.outputFilename.toLowerCase().endsWith('.pdf');
                 return (
                   <div key={result.id} className={styles.resultItem}>
                     <div className={styles.resultPreview}>
-                      <img src={result.previewUrl} alt={result.outputFilename} />
+                      {isPdfResult ? (
+                        <div className={styles.pdfIcon}>
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M9,13V19H7V13H9M15,15V19H13V15H15M11,11V19H17V11H11Z" />
+                          </svg>
+                          <span className={styles.pdfLabel}>PDF</span>
+                        </div>
+                      ) : (
+                        <img src={result.previewUrl} alt={result.outputFilename} />
+                      )}
                     </div>
                     <div className={styles.resultInfo}>
                       <span className={styles.resultName}>{result.outputFilename}</span>
