@@ -7,13 +7,22 @@ async function getPdfJs() {
   const pdfjsModule = await import('pdfjs-dist');
   const pdfjsLib = pdfjsModule.default || pdfjsModule;
   
-  // Set worker source from CDN - use Object.defineProperty for getter-only property
+  // Get existing GlobalWorkerOptions and set workerSrc
   const version = (pdfjsLib as any).version || '4.0.379';
-  Object.defineProperty(pdfjsLib, 'GlobalWorkerOptions', {
-    value: { workerSrc: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js` },
-    writable: true,
-    configurable: true,
-  });
+  try {
+    // Access the existing getter property and set workerSrc on the returned object
+    const workerOptions = (pdfjsLib as any).GlobalWorkerOptions;
+    if (workerOptions) {
+      workerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+    }
+  } catch (e) {
+    // If that fails, use Object.defineProperty to override (for older versions)
+    Object.defineProperty(pdfjsLib, 'GlobalWorkerOptions', {
+      value: { workerSrc: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js` },
+      writable: true,
+      configurable: true,
+    });
+  }
   
   return pdfjsLib;
 }
