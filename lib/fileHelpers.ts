@@ -98,6 +98,13 @@ export function getFileNameWithoutExtension(filename: string): string {
 }
 
 /**
+ * Check if file is a PDF
+ */
+export function isPdfFile(file: File): boolean {
+  return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+}
+
+/**
  * Generate output filename
  */
 export function generateOutputFilename(

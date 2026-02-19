@@ -23,6 +23,7 @@ import {
   isValidFileType,
   checkFileSize,
   downloadBlob,
+  isPdfFile,
 } from '@/lib/fileHelpers';
 import { convertImage, convertImages } from '@/lib/imageConverter';
 import { convertImagesToPdf } from '@/lib/imageToPdf';
@@ -528,7 +529,16 @@ export default function Home() {
               {files.map((file) => (
                 <div key={file.id} className={styles.fileItem}>
                   <div className={styles.filePreview}>
-                    <img src={file.previewUrl} alt={file.file.name} />
+                    {isPdfFile(file.file) ? (
+                      <div className={styles.pdfIcon}>
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M9,13V19H7V13H9M15,15V19H13V15H15M11,11V19H17V11H11Z" />
+                        </svg>
+                        <span className={styles.pdfLabel}>PDF</span>
+                      </div>
+                    ) : (
+                      <img src={file.previewUrl} alt={file.file.name} />
+                    )}
                   </div>
                   <div className={styles.fileInfo}>
                     <span className={styles.fileName}>{file.file.name}</span>
