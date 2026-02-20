@@ -14,6 +14,7 @@
     "react-dom": "18.3.1",
     "jspdf": "2.5.1",
     "pdfjs-dist": "3.11.174",
+    "pdf-lib": "1.17.1",
     "jszip": "3.10.1",
     "browser-image-compression": "2.0.2"
   },
