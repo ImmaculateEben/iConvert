@@ -43,7 +43,9 @@ export async function mergePdfs(
   }
   
   // Save the merged PDF
-  const pdfBytes = await mergedPdf.save();
+  const pdfBytes = await mergedPdf.save({
+    useObjectStreams: false,
+  });
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   
   // Generate filename

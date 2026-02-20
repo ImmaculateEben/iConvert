@@ -50,13 +50,14 @@ export interface PdfToImageSettings {
 
 // PDF Merge Settings
 export interface PdfMergeSettings {
-  // No settings needed for merge, just combine all PDFs
+  quality: number;
 }
 
 // PDF Split Settings
 export interface PdfSplitSettings {
   splitMode: 'all' | 'range' | 'single';
   customRange?: string;
+  quality: number;
 }
 
 // Union of all settings
@@ -87,11 +88,14 @@ export const defaultPdfToImageSettings: PdfToImageSettings = {
   pageRange: 'all',
 };
 
-export const defaultPdfMergeSettings: PdfMergeSettings = {};
+export const defaultPdfMergeSettings: PdfMergeSettings = {
+  quality: 0.8,
+};
 
 export const defaultPdfSplitSettings: PdfSplitSettings = {
   splitMode: 'all',
   customRange: '',
+  quality: 0.8,
 };
 
 // File type mappings

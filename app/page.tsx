@@ -574,6 +574,18 @@ export default function Home() {
               <p className={styles.settingHint}>
                 Select multiple PDF files to merge them into a single PDF. The files will be combined in the order they are listed.
               </p>
+              
+              <div className={styles.settingRow}>
+                <label className={styles.settingLabel}>Quality: {Math.round(pdfMergeSettings.quality * 100)}%</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={pdfMergeSettings.quality * 100}
+                  onChange={(e) => setPdfMergeSettings({ ...pdfMergeSettings, quality: Number(e.target.value) / 100 })}
+                  className={styles.settingRange}
+                />
+              </div>
             </div>
           )}
           
@@ -604,6 +616,18 @@ export default function Home() {
                   />
                 </div>
               )}
+              
+              <div className={styles.settingRow}>
+                <label className={styles.settingLabel}>Quality: {Math.round(pdfSplitSettings.quality * 100)}%</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={pdfSplitSettings.quality * 100}
+                  onChange={(e) => setPdfSplitSettings({ ...pdfSplitSettings, quality: Number(e.target.value) / 100 })}
+                  className={styles.settingRange}
+                />
+              </div>
             </div>
           )}
         </section>
