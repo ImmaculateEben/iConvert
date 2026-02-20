@@ -1,5 +1,5 @@
 // Converter Types
-export type ConverterType = 'image-to-image' | 'image-to-pdf' | 'pdf-to-image';
+export type ConverterType = 'image-to-image' | 'image-to-pdf' | 'pdf-to-image' | 'pdf-merge' | 'pdf-split';
 
 // File Item
 export interface FileItem {
@@ -48,8 +48,19 @@ export interface PdfToImageSettings {
   customPages?: string;
 }
 
+// PDF Merge Settings
+export interface PdfMergeSettings {
+  // No settings needed for merge, just combine all PDFs
+}
+
+// PDF Split Settings
+export interface PdfSplitSettings {
+  splitMode: 'all' | 'range' | 'single';
+  customRange?: string;
+}
+
 // Union of all settings
-export type ConversionSettings = ImageToImageSettings | ImageToPdfSettings | PdfToImageSettings;
+export type ConversionSettings = ImageToImageSettings | ImageToPdfSettings | PdfToImageSettings | PdfMergeSettings | PdfSplitSettings;
 
 // Default Settings
 export const defaultImageToImageSettings: ImageToImageSettings = {
@@ -76,11 +87,20 @@ export const defaultPdfToImageSettings: PdfToImageSettings = {
   pageRange: 'all',
 };
 
+export const defaultPdfMergeSettings: PdfMergeSettings = {};
+
+export const defaultPdfSplitSettings: PdfSplitSettings = {
+  splitMode: 'all',
+  customRange: '',
+};
+
 // File type mappings
 export const ACCEPTED_FILE_TYPES: Record<ConverterType, string[]> = {
   'image-to-image': ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
   'image-to-pdf': ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
   'pdf-to-image': ['application/pdf'],
+  'pdf-merge': ['application/pdf'],
+  'pdf-split': ['application/pdf'],
 };
 
 // File size limits (in bytes)
@@ -88,6 +108,8 @@ export const FILE_SIZE_LIMITS: Record<ConverterType, { recommended: number; max:
   'image-to-image': { recommended: 10 * 1024 * 1024, max: 50 * 1024 * 1024 },
   'image-to-pdf': { recommended: 10 * 1024 * 1024, max: 50 * 1024 * 1024 },
   'pdf-to-image': { recommended: 10 * 1024 * 1024, max: 25 * 1024 * 1024 },
+  'pdf-merge': { recommended: 10 * 1024 * 1024, max: 50 * 1024 * 1024 },
+  'pdf-split': { recommended: 10 * 1024 * 1024, max: 50 * 1024 * 1024 },
 };
 
 // Conversion constants

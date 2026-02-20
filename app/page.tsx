@@ -8,9 +8,13 @@ import {
   ImageToImageSettings,
   ImageToPdfSettings,
   PdfToImageSettings,
+  PdfMergeSettings,
+  PdfSplitSettings,
   defaultImageToImageSettings,
   defaultImageToPdfSettings,
   defaultPdfToImageSettings,
+  defaultPdfMergeSettings,
+  defaultPdfSplitSettings,
   ACCEPTED_FILE_TYPES,
   CONCURRENCY_LIMIT,
 } from '@/lib/types';
@@ -28,6 +32,7 @@ import {
 import { convertImage, convertImages } from '@/lib/imageConverter';
 import { convertImagesToPdf } from '@/lib/imageToPdf';
 import { convertPdfToImages } from '@/lib/pdfConverter';
+import { mergePdfs, splitPdf } from '@/lib/pdfMergeSplit';
 import { createZip, downloadFile } from '@/lib/zipHelper';
 import styles from './page.module.css';
 
@@ -36,6 +41,8 @@ const CONVERTER_OPTIONS: { value: ConverterType; label: string; description: str
   { value: 'image-to-image', label: 'Image to Image', description: 'Convert between PNG, JPG, WebP' },
   { value: 'image-to-pdf', label: 'Image to PDF', description: 'Convert images to PDF document' },
   { value: 'pdf-to-image', label: 'PDF to Image', description: 'Convert PDF pages to images' },
+  { value: 'pdf-merge', label: 'Merge PDF', description: 'Combine multiple PDFs into one' },
+  { value: 'pdf-split', label: 'Split PDF', description: 'Extract pages from PDF' },
 ];
 
 export default function Home() {
@@ -73,6 +80,8 @@ export default function Home() {
   const [imageToImageSettings, setImageToImageSettings] = useState<ImageToImageSettings>(defaultImageToImageSettings);
   const [imageToPdfSettings, setImageToPdfSettings] = useState<ImageToPdfSettings>(defaultImageToPdfSettings);
   const [pdfToImageSettings, setPdfToImageSettings] = useState<PdfToImageSettings>(defaultPdfToImageSettings);
+  const [pdfMergeSettings, setPdfMergeSettings] = useState<PdfMergeSettings>(defaultPdfMergeSettings);
+  const [pdfSplitSettings, setPdfSplitSettings] = useState<PdfSplitSettings>(defaultPdfSplitSettings);
   
   // Get accepted file types
   const acceptedTypes = ACCEPTED_FILE_TYPES[converterType];
@@ -214,6 +223,46 @@ export default function Home() {
           }));
           
           setResults(resultItems);
+          break;
+        }
+        
+        case 'pdf-merge': {
+          const merged = await mergePdfs(
+            files.map((f) => f.file),
+            pdfMergeSettings
+          );
+          
+          setResults([{
+            id: generateId(),
+            originalFile: files[0].file,
+            outputBlob: merged.blob,
+            outputFilename: merged.filename,
+            outputSize: merged.blob.size,
+            previewUrl: createPreviewUrl(merged.blob),
+          }]);
+          
+          setProgress(100);
+          break;
+        }
+        
+        case 'pdf-split': {
+          const pdfFile = files[0].file;
+          const splitResults = await splitPdf(
+            [pdfFile],
+            pdfSplitSettings
+          );
+          
+          const resultItems: ResultItem[] = splitResults.map((r) => ({
+            id: generateId(),
+            originalFile: pdfFile,
+            outputBlob: r.blob,
+            outputFilename: r.filename,
+            outputSize: r.blob.size,
+            previewUrl: createPreviewUrl(r.blob),
+          }));
+          
+          setResults(resultItems);
+          setProgress(100);
           break;
         }
       }
@@ -517,6 +566,44 @@ export default function Home() {
                   <option value="3">3x (216 DPI)</option>
                 </select>
               </div>
+            </div>
+          )}
+          
+          {converterType === 'pdf-merge' && (
+            <div className={styles.settingsPanel}>
+              <p className={styles.settingHint}>
+                Select multiple PDF files to merge them into a single PDF. The files will be combined in the order they are listed.
+              </p>
+            </div>
+          )}
+          
+          {converterType === 'pdf-split' && (
+            <div className={styles.settingsPanel}>
+              <div className={styles.settingRow}>
+                <label className={styles.settingLabel}>Split Mode</label>
+                <select
+                  className={styles.settingSelect}
+                  value={pdfSplitSettings.splitMode}
+                  onChange={(e) => setPdfSplitSettings({ ...pdfSplitSettings, splitMode: e.target.value as 'all' | 'range' | 'single' })}
+                >
+                  <option value="all">All Pages (each page becomes a separate PDF)</option>
+                  <option value="range">Custom Range</option>
+                  <option value="single">First Page Only</option>
+                </select>
+              </div>
+              
+              {pdfSplitSettings.splitMode === 'range' && (
+                <div className={styles.settingRow}>
+                  <label className={styles.settingLabel}>Page Range</label>
+                  <input
+                    type="text"
+                    className={styles.settingInput}
+                    value={pdfSplitSettings.customRange || ''}
+                    onChange={(e) => setPdfSplitSettings({ ...pdfSplitSettings, customRange: e.target.value })}
+                    placeholder="e.g., 1-3, 5, 7-9"
+                  />
+                </div>
+              )}
             </div>
           )}
         </section>
