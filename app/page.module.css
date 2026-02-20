@@ -15,6 +15,28 @@
   margin-bottom: var(--space-10);
 }
 
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.4));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
 .title {
   font-size: var(--text-3xl);
   font-weight: var(--font-bold);
