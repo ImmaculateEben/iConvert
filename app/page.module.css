@@ -22,8 +22,8 @@
 }
 
 .logo {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.4));
   animation: float 3s ease-in-out infinite;
 }
@@ -38,7 +38,7 @@
 }
 
 .title {
-  font-size: var(--text-3xl);
+  font-size: var(--text-4xl);
   font-weight: var(--font-bold);
   background: var(--gradient-hero);
   -webkit-background-clip: text;
