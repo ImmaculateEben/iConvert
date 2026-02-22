@@ -10,11 +10,13 @@ import {
   PdfToImageSettings,
   PdfMergeSettings,
   PdfSplitSettings,
+  PdfOrganizeSettings,
   defaultImageToImageSettings,
   defaultImageToPdfSettings,
   defaultPdfToImageSettings,
   defaultPdfMergeSettings,
   defaultPdfSplitSettings,
+  defaultPdfOrganizeSettings,
   ACCEPTED_FILE_TYPES,
   CONCURRENCY_LIMIT,
 } from '@/lib/types';
@@ -33,6 +35,7 @@ import { convertImage, convertImages } from '@/lib/imageConverter';
 import { convertImagesToPdf } from '@/lib/imageToPdf';
 import { convertPdfToImages } from '@/lib/pdfConverter';
 import { mergePdfs, splitPdf } from '@/lib/pdfMergeSplit';
+import { loadPdfPages, applyOrganizeChanges, PdfPage } from '@/lib/pdfOrganizer';
 import { createZip, downloadFile } from '@/lib/zipHelper';
 import styles from './page.module.css';
 
@@ -109,6 +112,7 @@ const CONVERTER_OPTIONS: { value: ConverterType; label: string; description: str
   { value: 'pdf-to-image', label: 'PDF to Image', description: 'Convert PDF pages to images' },
   { value: 'pdf-merge', label: 'Merge PDF', description: 'Combine multiple PDFs into one' },
   { value: 'pdf-split', label: 'Split PDF', description: 'Extract pages from PDF' },
+  { value: 'pdf-organize', label: 'Organize PDF', description: 'Reorder, rotate, delete pages' },
 ];
 
 export default function Home() {
@@ -149,6 +153,12 @@ export default function Home() {
   const [pdfToImageSettings, setPdfToImageSettings] = useState<PdfToImageSettings>(defaultPdfToImageSettings);
   const [pdfMergeSettings, setPdfMergeSettings] = useState<PdfMergeSettings>(defaultPdfMergeSettings);
   const [pdfSplitSettings, setPdfSplitSettings] = useState<PdfSplitSettings>(defaultPdfSplitSettings);
+  const [pdfOrganizeSettings, setPdfOrganizeSettings] = useState<PdfOrganizeSettings>(defaultPdfOrganizeSettings);
+  
+  // PDF Pages state for organizer
+  const [pdfPages, setPdfPages] = useState<PdfPage[]>([]);
+  const [selectedPages, setSelectedPages] = useState<number[]>([]);
+  const [isLoadingPages, setIsLoadingPages] = useState(false);
   
   // Get accepted file types
   const acceptedTypes = ACCEPTED_FILE_TYPES[converterType];
@@ -332,13 +342,36 @@ export default function Home() {
           setProgress(100);
           break;
         }
+        
+        case 'pdf-organize': {
+          const pdfFile = files[0].file;
+          
+          // Apply all changes from the organizer
+          const result = await applyOrganizeChanges(
+            pdfFile,
+            pdfPages,
+            pdfOrganizeSettings
+          );
+          
+          setResults([{
+            id: generateId(),
+            originalFile: pdfFile,
+            outputBlob: result.blob,
+            outputFilename: result.filename,
+            outputSize: result.blob.size,
+            previewUrl: createPreviewUrl(result.blob),
+          }]);
+          
+          setProgress(100);
+          break;
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversion failed');
     } finally {
       setIsConverting(false);
     }
-  }, [files, converterType, imageToImageSettings, imageToPdfSettings, pdfToImageSettings, pdfMergeSettings, pdfSplitSettings]);
+  }, [files, converterType, imageToImageSettings, imageToPdfSettings, pdfToImageSettings, pdfMergeSettings, pdfSplitSettings, pdfOrganizeSettings, pdfPages]);
   
   // Download single result
   const handleDownload = useCallback((result: ResultItem) => {
@@ -732,6 +765,102 @@ export default function Home() {
                     className={styles.settingRange}
                   />
                 </div>
+              </div>
+            )}
+            
+            {converterType === 'pdf-organize' && (
+              <div className={styles.settingsPanel}>
+                <p className={styles.settingHint}>
+                  Upload a PDF to view, reorder, rotate, and delete pages.
+                </p>
+                
+                {/* Load PDF Pages Button */}
+                {files.length > 0 && pdfPages.length === 0 && (
+                  <button
+                    className={styles.loadPagesButton}
+                    onClick={async () => {
+                      setIsLoadingPages(true);
+                      try {
+                        const pages = await loadPdfPages(files[0].file, (current, total) => {
+                          setProgress(Math.round((current / total) * 100));
+                        });
+                        setPdfPages(pages);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Failed to load PDF pages');
+                      } finally {
+                        setIsLoadingPages(false);
+                      }
+                    }}
+                    disabled={isLoadingPages}
+                  >
+                    {isLoadingPages ? 'Loading pages...' : 'Load PDF Pages'}
+                  </button>
+                )}
+                
+                {/* PDF Pages Grid */}
+                {pdfPages.length > 0 && (
+                  <div className={styles.pdfPagesGrid}>
+                    {pdfPages.map((page, index) => (
+                      <div
+                        key={page.pageNumber}
+                        className={`${styles.pdfPageCard} ${selectedPages.includes(index + 1) ? styles.pdfPageCardSelected : ''}`}
+                        onClick={() => {
+                          setSelectedPages(prev => 
+                            prev.includes(index + 1)
+                              ? prev.filter(p => p !== index + 1)
+                              : [...prev, index + 1]
+                          );
+                        }}
+                      >
+                        <div 
+                          className={styles.pdfPageThumb}
+                          style={{ transform: `rotate(${page.rotation}deg)` }}
+                        >
+                          {page.thumbnail && <img src={page.thumbnail} alt={`Page ${page.pageNumber}`} />}
+                        </div>
+                        <span className={styles.pdfPageNumber}>Page {page.pageNumber}</span>
+                        <div className={styles.pdfPageActions}>
+                          <button
+                            className={styles.pageActionBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newPages = [...pdfPages];
+                              newPages[index] = { ...page, rotation: (page.rotation + 90) % 360 };
+                              setPdfPages(newPages);
+                            }}
+                            title="Rotate"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          </button>
+                          <button
+                            className={styles.pageActionBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const newPages = pdfPages.filter((_, i) => i !== index);
+                              setPdfPages(newPages);
+                            }}
+                            title="Delete"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                        {selectedPages.includes(index + 1) && (
+                          <span className={styles.selectedBadge}>Selected</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {pdfPages.length > 0 && (
+                  <p className={styles.pageInfo}>
+                    {pdfPages.length} page{pdfPages.length !== 1 ? 's' : ''} • {selectedPages.length} selected
+                  </p>
+                )}
               </div>
             )}
           </section>
