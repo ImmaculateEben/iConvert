@@ -162,6 +162,36 @@ export default function Home() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
+  // Undo/Redo history
+  const [history, setHistory] = useState<PdfPage[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  
+  // Helper to save state to history
+  const saveToHistory = useCallback((pages: PdfPage[]) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push([...pages]);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  }, [history, historyIndex]);
+  
+  // Undo function
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      const prevState = history[historyIndex - 1];
+      setPdfPages(prevState);
+      setHistoryIndex(historyIndex - 1);
+    }
+  }, [history, historyIndex]);
+  
+  // Redo function
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setPdfPages(nextState);
+      setHistoryIndex(historyIndex + 1);
+    }
+  }, [history, historyIndex]);
+  
   // Get accepted file types
   const acceptedTypes = ACCEPTED_FILE_TYPES[converterType];
   
@@ -787,6 +817,8 @@ export default function Home() {
                           setProgress(Math.round((current / total) * 100));
                         });
                         setPdfPages(pages);
+                        setHistory([]);
+                        setHistoryIndex(-1);
                       } catch (err) {
                         setError(err instanceof Error ? err.message : 'Failed to load PDF pages');
                       } finally {
@@ -800,6 +832,59 @@ export default function Home() {
                 )}
                 
                 {/* PDF Pages Grid */}
+                {pdfPages.length > 0 && (
+                  <div className={styles.organizeToolbar}>
+                    <div className={styles.historyButtons}>
+                      <button
+                        className={styles.historyButton}
+                        onClick={undo}
+                        disabled={historyIndex <= 0}
+                        title="Undo"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                        Undo
+                      </button>
+                      <button
+                        className={styles.historyButton}
+                        onClick={redo}
+                        disabled={historyIndex >= history.length - 1}
+                        title="Redo"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                        </svg>
+                        Redo
+                      </button>
+                    </div>
+                    <button
+                      className={styles.applyButton}
+                      onClick={async () => {
+                        setIsConverting(true);
+                        try {
+                          const result = await applyOrganizeChanges(files[0].file, pdfPages, defaultPdfOrganizeSettings);
+                          setResults([{
+                            id: generateId(),
+                            originalFile: files[0].file,
+                            outputBlob: result.blob,
+                            outputFilename: result.filename,
+                            outputSize: result.blob.size,
+                            previewUrl: createPreviewUrl(result.blob),
+                          }]);
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : 'Failed to apply changes');
+                        } finally {
+                          setIsConverting(false);
+                        }
+                      }}
+                      disabled={isConverting}
+                    >
+                      {isConverting ? 'Applying...' : 'Apply Changes'}
+                    </button>
+                  </div>
+                )}
+
                 {pdfPages.length > 0 && (
                   <div className={styles.pdfPagesGrid}>
                     {pdfPages.map((page, index) => (
@@ -828,6 +913,7 @@ export default function Home() {
                             const [removed] = newPages.splice(draggedIndex, 1);
                             newPages.splice(index, 0, removed);
                             setPdfPages(newPages);
+                            saveToHistory(newPages);
                           }
                           setDraggedIndex(null);
                           setDragOverIndex(null);
@@ -855,6 +941,7 @@ export default function Home() {
                               const newPages = [...pdfPages];
                               newPages[index] = { ...page, rotation: (page.rotation + 90) % 360 };
                               setPdfPages(newPages);
+                              saveToHistory(newPages);
                             }}
                             title="Rotate"
                           >
@@ -868,6 +955,7 @@ export default function Home() {
                               e.stopPropagation();
                               const newPages = pdfPages.filter((_, i) => i !== index);
                               setPdfPages(newPages);
+                              saveToHistory(newPages);
                             }}
                             title="Delete"
                           >
