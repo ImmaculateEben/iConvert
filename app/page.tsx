@@ -159,6 +159,8 @@ export default function Home() {
   const [pdfPages, setPdfPages] = useState<PdfPage[]>([]);
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   // Get accepted file types
   const acceptedTypes = ACCEPTED_FILE_TYPES[converterType];
@@ -803,7 +805,33 @@ export default function Home() {
                     {pdfPages.map((page, index) => (
                       <div
                         key={page.pageNumber}
-                        className={`${styles.pdfPageCard} ${selectedPages.includes(index + 1) ? styles.pdfPageCardSelected : ''}`}
+                        className={`${styles.pdfPageCard} ${selectedPages.includes(index + 1) ? styles.pdfPageCardSelected : ''} ${draggedIndex === index ? styles.pdfPageCardDragging : ''} ${dragOverIndex === index ? styles.pdfPageCardDragOver : ''}`}
+                        draggable
+                        onDragStart={(e) => {
+                          setDraggedIndex(index);
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                        onDragEnd={() => {
+                          setDraggedIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (draggedIndex !== null && draggedIndex !== index) {
+                            setDragOverIndex(index);
+                          }
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (draggedIndex !== null && draggedIndex !== index) {
+                            const newPages = [...pdfPages];
+                            const [removed] = newPages.splice(draggedIndex, 1);
+                            newPages.splice(index, 0, removed);
+                            setPdfPages(newPages);
+                          }
+                          setDraggedIndex(null);
+                          setDragOverIndex(null);
+                        }}
                         onClick={() => {
                           setSelectedPages(prev => 
                             prev.includes(index + 1)
@@ -851,6 +879,7 @@ export default function Home() {
                         {selectedPages.includes(index + 1) && (
                           <span className={styles.selectedBadge}>Selected</span>
                         )}
+                        <span className={styles.dragHint}>☰</span>
                       </div>
                     ))}
                   </div>
