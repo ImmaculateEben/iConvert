@@ -1,38 +1,17 @@
 import { PdfOrganizeSettings } from './types';
 
-// PDF.js and pdf-lib will be loaded dynamically
-let pdfjsLib: any = null;
-let pdfLib: any = null;
+// Static imports for pdfjs and pdf-lib
+import * as pdfjsLib from 'pdfjs-dist';
+import { PDFDocument, degrees } from 'pdf-lib';
 
-async function getPdfJs() {
-  if (!pdfjsLib) {
-    const module = await import('pdfjs-dist');
-    pdfjsLib = module.default || module;
-    
-    // Set up worker
-    const version = pdfjsLib.version || '3.11.174';
-    try {
-      const workerOptions = (pdfjsLib as any).GlobalWorkerOptions;
-      if (workerOptions) {
-        workerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
-      }
-    } catch (e) {
-      Object.defineProperty(pdfjsLib, 'GlobalWorkerOptions', {
-        value: { workerSrc: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js` },
-        writable: true,
-        configurable: true,
-      });
-    }
+// Initialize pdfjs worker
+if (typeof window !== 'undefined') {
+  const version = pdfjsLib.version || '3.11.174';
+  try {
+    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+  } catch (e) {
+    // Worker already set
   }
-  return pdfjsLib;
-}
-
-async function getPdfLib() {
-  if (!pdfLib) {
-    const module = await import('pdf-lib');
-    pdfLib = module;
-  }
-  return pdfLib;
 }
 
 export interface PdfPage {
@@ -48,6 +27,29 @@ export interface OrganizeResult {
   pageCount: number;
 }
 
+function buildPdfFilename(file: File, suffix: string): string {
+  const baseName = file.name.replace(/\.pdf$/i, '');
+  return `${baseName}_${suffix}.pdf`;
+}
+
+async function savePdfDocument(doc: PDFDocument): Promise<Blob> {
+  const pdfBytes = await doc.save({ useObjectStreams: false });
+  return new Blob([pdfBytes], { type: 'application/pdf' });
+}
+
+async function createOrganizeResult(
+  doc: PDFDocument,
+  file: File,
+  suffix: string,
+  pageCount: number
+): Promise<OrganizeResult> {
+  return {
+    blob: await savePdfDocument(doc),
+    filename: buildPdfFilename(file, suffix),
+    pageCount,
+  };
+}
+
 /**
  * Load a PDF file and extract page thumbnails
  */
@@ -56,8 +58,7 @@ export async function loadPdfPages(
   onProgress?: (current: number, total: number) => void
 ): Promise<PdfPage[]> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdfjs = await getPdfJs();
-  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const numPages = pdf.numPages;
   const pages: PdfPage[] = [];
 
@@ -79,6 +80,8 @@ export async function loadPdfPages(
     }).promise;
 
     const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+    canvas.width = 0;
+    canvas.height = 0;
 
     pages.push({
       pageNumber: i,
@@ -101,10 +104,9 @@ export async function loadPdfPages(
 export async function applyOrganizeChanges(
   file: File,
   pages: PdfPage[],
-  settings: PdfOrganizeSettings
+  _settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument, degrees } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const newDoc = await PDFDocument.create();
@@ -118,19 +120,12 @@ export async function applyOrganizeChanges(
     
     if (pages[i].rotation !== 0) {
       const currentRotation = page.getRotation().angle;
-      page.setRotation(degrees(currentRotation + pages[i].rotation));
+      const nextRotation = ((currentRotation + pages[i].rotation) % 360 + 360) % 360;
+      page.setRotation(degrees(nextRotation));
     }
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-  const baseName = file.name.replace(/\.pdf$/i, '');
-  return {
-    blob,
-    filename: `${baseName}_organized.pdf`,
-    pageCount: pages.length,
-  };
+  return createOrganizeResult(newDoc, file, 'organized', pages.length);
 }
 
 /**
@@ -139,17 +134,17 @@ export async function applyOrganizeChanges(
 export async function deletePages(
   file: File,
   pagesToDelete: number[],
-  settings: PdfOrganizeSettings
+  _settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const numPages = srcDoc.getPageCount();
   
+  const pagesToDeleteSet = new Set(pagesToDelete);
   const pagesToKeep: number[] = [];
   for (let i = 0; i < numPages; i++) {
-    if (!pagesToDelete.includes(i + 1)) {
+    if (!pagesToDeleteSet.has(i + 1)) {
       pagesToKeep.push(i);
     }
   }
@@ -161,15 +156,7 @@ export async function deletePages(
     newDoc.addPage(page);
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-  const baseName = file.name.replace(/\.pdf$/i, '');
-  return {
-    blob,
-    filename: `${baseName}_reduced.pdf`,
-    pageCount: pagesToKeep.length,
-  };
+  return createOrganizeResult(newDoc, file, 'reduced', pagesToKeep.length);
 }
 
 /**
@@ -178,30 +165,23 @@ export async function deletePages(
 export async function extractPages(
   file: File,
   pagesToExtract: number[],
-  settings: PdfOrganizeSettings
+  _settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const newDoc = await PDFDocument.create();
 
-  const pageIndices = pagesToExtract.map(p => p - 1).filter(p => p >= 0);
+  const pageIndices = [...new Set(pagesToExtract)]
+    .map((pageNumber) => pageNumber - 1)
+    .filter((pageIndex) => pageIndex >= 0 && pageIndex < srcDoc.getPageCount());
   const copiedPages = await newDoc.copyPages(srcDoc, pageIndices);
 
   for (const page of copiedPages) {
     newDoc.addPage(page);
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-  const baseName = file.name.replace(/\.pdf$/i, '');
-  return {
-    blob,
-    filename: `${baseName}_extracted.pdf`,
-    pageCount: pagesToExtract.length,
-  };
+  return createOrganizeResult(newDoc, file, 'extracted', copiedPages.length);
 }
 
 /**
@@ -210,10 +190,9 @@ export async function extractPages(
 export async function rotatePages(
   file: File,
   pageRotations: { pageNumber: number; rotation: number }[],
-  settings: PdfOrganizeSettings
+  _settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument, degrees } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const pages = srcDoc.getPages();
@@ -222,17 +201,10 @@ export async function rotatePages(
     if (pageNumber > 0 && pageNumber <= pages.length) {
       const page = pages[pageNumber - 1];
       const currentRotation = page.getRotation().angle;
-      page.setRotation(degrees(currentRotation + rotation));
+      const nextRotation = ((currentRotation + rotation) % 360 + 360) % 360;
+      page.setRotation(degrees(nextRotation));
     }
   }
 
-  const pdfBytes = await srcDoc.save({ useObjectStreams: false });
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-  const baseName = file.name.replace(/\.pdf$/i, '');
-  return {
-    blob,
-    filename: `${baseName}_rotated.pdf`,
-    pageCount: pages.length,
-  };
+  return createOrganizeResult(srcDoc, file, 'rotated', pages.length);
 }

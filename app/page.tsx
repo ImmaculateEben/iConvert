@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   ConverterType,
   FileItem,
@@ -31,7 +31,7 @@ import {
   downloadBlob,
   isPdfFile,
 } from '@/lib/fileHelpers';
-import { convertImage, convertImages } from '@/lib/imageConverter';
+import { convertImages } from '@/lib/imageConverter';
 import { convertImagesToPdf } from '@/lib/imageToPdf';
 import { convertPdfToImages } from '@/lib/pdfConverter';
 import { mergePdfs, splitPdf } from '@/lib/pdfMergeSplit';
@@ -119,6 +119,7 @@ export default function Home() {
   // Theme state
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [showConverter, setShowConverter] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Check for saved preference or system preference
@@ -159,6 +160,7 @@ export default function Home() {
   const [pdfPages, setPdfPages] = useState<PdfPage[]>([]);
   const [selectedPages, setSelectedPages] = useState<number[]>([]);
   const [isLoadingPages, setIsLoadingPages] = useState(false);
+  const [isDropzoneActive, setIsDropzoneActive] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
@@ -200,23 +202,24 @@ export default function Home() {
     if (!selectedFiles) return;
     
     const newFiles: FileItem[] = [];
+    const errors: string[] = [];
     
     Array.from(selectedFiles).forEach((file) => {
       // Check file type
       if (!isValidFileType(file, converterType)) {
-        setError(`Invalid file type: ${file.name}. Accepted: ${acceptedTypes.join(', ')}`);
+        errors.push(`Invalid file type: ${file.name}. Accepted: ${acceptedTypes.join(', ')}`);
         return;
       }
       
       // Check file size
       const sizeCheck = checkFileSize(file, converterType);
       if (!sizeCheck.valid) {
-        setError(sizeCheck.message);
+        errors.push(sizeCheck.message);
         return;
       }
       
       if (sizeCheck.message) {
-        setError(sizeCheck.message);
+        errors.push(sizeCheck.message);
       }
       
       // Create file item
@@ -228,20 +231,34 @@ export default function Home() {
       });
     });
     
-    setFiles((prev) => [...prev, ...newFiles]);
-    setError(null);
+    if (newFiles.length > 0) {
+      setFiles((prev) => [...prev, ...newFiles]);
+    }
+    setError(errors.length > 0 ? errors[0] : null);
   }, [converterType, acceptedTypes]);
   
   // Handle drag and drop
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDropzoneActive(false);
     handleFileSelect(e.dataTransfer.files);
   }, [handleFileSelect]);
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isDropzoneActive) {
+      setIsDropzoneActive(true);
+    }
+  }, [isDropzoneActive]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === e.target) {
+      setIsDropzoneActive(false);
+    }
   }, []);
   
   // Remove file
@@ -258,10 +275,16 @@ export default function Home() {
   // Clear all files
   const handleClearFiles = useCallback(() => {
     files.forEach((f) => revokePreviewUrl(f.previewUrl));
+    results.forEach((r) => revokePreviewUrl(r.previewUrl));
     setFiles([]);
     setResults([]);
+    setPdfPages([]);
+    setSelectedPages([]);
+    setHistory([]);
+    setHistoryIndex(-1);
+    setProgress(0);
     setError(null);
-  }, [files]);
+  }, [files, results]);
   
   // Convert files
   const handleConvert = useCallback(async () => {
@@ -425,13 +448,23 @@ export default function Home() {
     }
   }, [results]);
   
-  // Cleanup on unmount
+  // Cleanup object URLs when files/results change or component unmounts
   useEffect(() => {
     return () => {
       files.forEach((f) => revokePreviewUrl(f.previewUrl));
       results.forEach((r) => revokePreviewUrl(r.previewUrl));
     };
-  }, []);
+  }, [files, results]);
+
+  useEffect(() => {
+    setSelectedPages((prev) => {
+      if (prev.length === 0) return prev;
+
+      const validPageIds = new Set(pdfPages.map((page) => page.originalPageNumber));
+      const next = prev.filter((pageId) => validPageIds.has(pageId));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [pdfPages]);
   
   // Total file size
   const totalSize = files.reduce((acc, f) => acc + f.file.size, 0);
@@ -518,12 +551,23 @@ export default function Home() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Upload Files</h2>
             <div
-              className={styles.dropzone}
+              className={`${styles.dropzone} ${isDropzoneActive ? styles.dropzoneActive : ''}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onClick={() => document.getElementById('file-input')?.click()}
+              onDragLeave={handleDragLeave}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload files"
             >
               <input
+                ref={fileInputRef}
                 id="file-input"
                 type="file"
                 multiple
@@ -537,9 +581,7 @@ export default function Home() {
                 </svg>
                 <p className={styles.dropzoneText}>Drag and drop files here, or click to select</p>
                 <p className={styles.dropzoneHint}>
-                  {converterType === 'image-to-image' && 'Supports: PNG, JPG, WebP, GIF'}
-                  {converterType === 'image-to-pdf' && 'Supports: PNG, JPG, WebP, GIF'}
-                  {converterType === 'pdf-to-image' && 'Supports: PDF'}
+                  {`Supports: ${acceptedTypes.map((type) => type.split('/')[1]?.toUpperCase() || type).join(', ')}`}
                 </p>
               </div>
             </div>
@@ -817,8 +859,9 @@ export default function Home() {
                           setProgress(Math.round((current / total) * 100));
                         });
                         setPdfPages(pages);
-                        setHistory([]);
-                        setHistoryIndex(-1);
+                        setSelectedPages([]);
+                        setHistory([pages]);
+                        setHistoryIndex(0);
                       } catch (err) {
                         setError(err instanceof Error ? err.message : 'Failed to load PDF pages');
                       } finally {
@@ -890,7 +933,7 @@ export default function Home() {
                     {pdfPages.map((page, index) => (
                       <div
                         key={page.pageNumber}
-                        className={`${styles.pdfPageCard} ${selectedPages.includes(index + 1) ? styles.pdfPageCardSelected : ''} ${draggedIndex === index ? styles.pdfPageCardDragging : ''} ${dragOverIndex === index ? styles.pdfPageCardDragOver : ''}`}
+                        className={`${styles.pdfPageCard} ${selectedPages.includes(page.originalPageNumber) ? styles.pdfPageCardSelected : ''} ${draggedIndex === index ? styles.pdfPageCardDragging : ''} ${dragOverIndex === index ? styles.pdfPageCardDragOver : ''}`}
                         draggable
                         onDragStart={(e) => {
                           setDraggedIndex(index);
@@ -920,9 +963,9 @@ export default function Home() {
                         }}
                         onClick={() => {
                           setSelectedPages(prev => 
-                            prev.includes(index + 1)
-                              ? prev.filter(p => p !== index + 1)
-                              : [...prev, index + 1]
+                            prev.includes(page.originalPageNumber)
+                              ? prev.filter((p) => p !== page.originalPageNumber)
+                              : [...prev, page.originalPageNumber]
                           );
                         }}
                       >
@@ -955,6 +998,7 @@ export default function Home() {
                               e.stopPropagation();
                               const newPages = pdfPages.filter((_, i) => i !== index);
                               setPdfPages(newPages);
+                              setSelectedPages((prev) => prev.filter((p) => p !== page.originalPageNumber));
                               saveToHistory(newPages);
                             }}
                             title="Delete"
@@ -964,7 +1008,7 @@ export default function Home() {
                             </svg>
                           </button>
                         </div>
-                        {selectedPages.includes(index + 1) && (
+                        {selectedPages.includes(page.originalPageNumber) && (
                           <span className={styles.selectedBadge}>Selected</span>
                         )}
                         <span className={styles.dragHint}>☰</span>
