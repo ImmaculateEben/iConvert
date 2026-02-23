@@ -463,9 +463,9 @@ export default function Home() {
 
         <div className={styles.container}>
           {/* Header */}
-          <header className={styles.header}>
-            <div className={styles.logoContainer}>
-              <svg className={styles.logo} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <header className={`${styles.header} ${styles.heroHeader}`}>
+            <div className={`${styles.logoContainer} ${styles.heroLogoContainer}`}>
+              <svg className={`${styles.logo} ${styles.heroLogo}`} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                   <linearGradient id="fileGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#6366f1" />
@@ -488,8 +488,8 @@ export default function Home() {
                 <path d="M32 30L36 34H28L32 30Z" fill="#f59e0b" />
               </svg>
             </div>
-            <h1 className={styles.title}>iConvert</h1>
-            <p className={styles.subtitle}>
+            <h1 className={`${styles.title} ${styles.heroTitle}`}>iConvert</h1>
+            <p className={`${styles.subtitle} ${styles.heroSubtitle}`}>
               Convert images and PDFs directly in your browser. No upload to server.
             </p>
           </header>

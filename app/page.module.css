@@ -15,6 +15,50 @@
   margin-bottom: var(--space-10);
 }
 
+.heroHeader {
+  padding: var(--space-12) var(--space-6);
+}
+
+.heroLogoContainer {
+  margin-bottom: var(--space-6);
+}
+
+.heroLogo {
+  width: 120px;
+}
+
+.heroTitle {
+  font-size: 18px;
+  margin-bottom: var(--space-8);
+}
+
+.heroSubtitle {
+  font-size: var(--text-2xl);
+  max-width: 700px;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .heroTitle {
+    font-size: 24px;
+  }
+  
+  .heroSubtitle {
+    font-size: var(--text-3xl);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .heroTitle {
+    font-size: 28px;
+  }
+  
+  .heroSubtitle {
+    font-size: var(--text-4xl);
+  }
+}
+
 .logoContainer {
   display: flex;
   justify-content: center;
