@@ -112,7 +112,7 @@
 }
 
 .sectionHeader .sectionTitle {
-  margin-bottom: 0;
+  margin-bottom: var(--space-8);
   flex: 1;
 }
 
