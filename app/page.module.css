@@ -89,6 +89,12 @@
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
+@media (min-width: 1024px) {
+  .section {
+    padding: var(--space-10) var(--space-8);
+  }
+}
+
 .sectionTitle {
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
