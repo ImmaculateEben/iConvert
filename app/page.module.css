@@ -16,7 +16,7 @@
 }
 
 .heroHeader {
-  padding: var(--space-12) var(--space-6);
+  padding: var(--space-10) var(--space-4);
 }
 
 .heroLogoContainer {
@@ -28,7 +28,7 @@
 }
 
 .heroTitle {
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: var(--space-8);
 }
 
