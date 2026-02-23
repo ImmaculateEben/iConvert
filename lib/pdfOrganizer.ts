@@ -1,38 +1,17 @@
 import { PdfOrganizeSettings } from './types';
 
-// PDF.js and pdf-lib will be loaded dynamically
-let pdfjsLib: any = null;
-let pdfLib: any = null;
+// Static imports for pdfjs and pdf-lib
+import * as pdfjsLib from 'pdfjs-dist';
+import { PDFDocument, degrees } from 'pdf-lib';
 
-async function getPdfJs() {
-  if (!pdfjsLib) {
-    const module = await import('pdfjs-dist');
-    pdfjsLib = module.default || module;
-    
-    // Set up worker
-    const version = pdfjsLib.version || '3.11.174';
-    try {
-      const workerOptions = (pdfjsLib as any).GlobalWorkerOptions;
-      if (workerOptions) {
-        workerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
-      }
-    } catch (e) {
-      Object.defineProperty(pdfjsLib, 'GlobalWorkerOptions', {
-        value: { workerSrc: `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js` },
-        writable: true,
-        configurable: true,
-      });
-    }
+// Initialize pdfjs worker
+if (typeof window !== 'undefined') {
+  const version = pdfjsLib.version || '3.11.174';
+  try {
+    (pdfjsLib as any).GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+  } catch (e) {
+    // Worker already set
   }
-  return pdfjsLib;
-}
-
-async function getPdfLib() {
-  if (!pdfLib) {
-    const module = await import('pdf-lib');
-    pdfLib = module;
-  }
-  return pdfLib;
 }
 
 export interface PdfPage {
@@ -56,8 +35,7 @@ export async function loadPdfPages(
   onProgress?: (current: number, total: number) => void
 ): Promise<PdfPage[]> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdfjs = await getPdfJs();
-  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const numPages = pdf.numPages;
   const pages: PdfPage[] = [];
 
@@ -104,7 +82,6 @@ export async function applyOrganizeChanges(
   settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument, degrees } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const newDoc = await PDFDocument.create();
@@ -122,7 +99,7 @@ export async function applyOrganizeChanges(
     }
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
+  const pdfBytes = await newDoc.save({ useObjectStreams: false }) as any;
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
   const baseName = file.name.replace(/\.pdf$/i, '');
@@ -142,7 +119,6 @@ export async function deletePages(
   settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const numPages = srcDoc.getPageCount();
@@ -161,7 +137,7 @@ export async function deletePages(
     newDoc.addPage(page);
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
+  const pdfBytes = await newDoc.save({ useObjectStreams: false }) as any;
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
   const baseName = file.name.replace(/\.pdf$/i, '');
@@ -181,7 +157,6 @@ export async function extractPages(
   settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const newDoc = await PDFDocument.create();
@@ -193,7 +168,7 @@ export async function extractPages(
     newDoc.addPage(page);
   }
 
-  const pdfBytes = await newDoc.save({ useObjectStreams: false });
+  const pdfBytes = await newDoc.save({ useObjectStreams: false }) as any;
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
   const baseName = file.name.replace(/\.pdf$/i, '');
@@ -213,7 +188,6 @@ export async function rotatePages(
   settings: PdfOrganizeSettings
 ): Promise<OrganizeResult> {
   const arrayBuffer = await file.arrayBuffer();
-  const { PDFDocument, degrees } = await getPdfLib();
   
   const srcDoc = await PDFDocument.load(arrayBuffer);
   const pages = srcDoc.getPages();
@@ -226,7 +200,7 @@ export async function rotatePages(
     }
   }
 
-  const pdfBytes = await srcDoc.save({ useObjectStreams: false });
+  const pdfBytes = await srcDoc.save({ useObjectStreams: false }) as any;
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
 
   const baseName = file.name.replace(/\.pdf$/i, '');
