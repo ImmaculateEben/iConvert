@@ -89,6 +89,9 @@
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 
 @media (min-width: 1024px) {
@@ -112,7 +115,7 @@
 }
 
 .sectionHeader .sectionTitle {
-  margin-bottom: var(--space-8);
+  margin-bottom: 0;
   flex: 1;
 }
 
