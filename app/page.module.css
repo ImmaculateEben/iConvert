@@ -1005,6 +1005,13 @@
 .howItWorksContainer {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem 0;
+}
+
+@media (min-width: 1024px) {
+  .howItWorksContainer {
+    padding: 3rem 0;
+  }
 }
 
 .stepsGrid {
