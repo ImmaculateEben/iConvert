@@ -38,13 +38,13 @@
 }
 
 .title {
-  font-size: var(--text-7xl);
+  font-size: var(--text-8xl);
   font-weight: var(--font-bold);
   background: var(--gradient-hero);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .subtitle {
@@ -101,7 +101,7 @@
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
   color: var(--color-text);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-8);
 }
 
 .sectionHeader {
@@ -620,7 +620,7 @@
   }
 
   .title {
-    font-size: var(--text-4xl);
+    font-size: var(--text-6xl);
   }
 
   .subtitle {
@@ -1015,7 +1015,7 @@
 
 @media (min-width: 1024px) {
   .howItWorksContainer {
-    padding: 0;
+    padding: 3rem 0;
   }
 }
 
