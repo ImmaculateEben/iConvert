@@ -38,7 +38,7 @@
 }
 
 .title {
-  font-size: var(--text-4xl);
+  font-size: var(--text-5xl);
   font-weight: var(--font-bold);
   background: var(--gradient-hero);
   -webkit-background-clip: text;
