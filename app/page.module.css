@@ -91,7 +91,7 @@
 
 @media (min-width: 1024px) {
   .section {
-    padding: var(--space-10) var(--space-8);
+    padding: 100px var(--space-8);
   }
 }
 
