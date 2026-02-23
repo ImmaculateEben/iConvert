@@ -928,11 +928,11 @@
   margin-bottom: var(--space-4);
 }
 
-/* Desktop padding for Features */
+/* Desktop padding for Features and How It Works */
 @media (min-width: 1024px) {
   .features,
   .howItWorks {
-    padding: var(--space-24) var(--space-12);
+    padding: 5rem 4rem;
   }
 }
 
