@@ -38,7 +38,7 @@
 }
 
 .title {
-  font-size: 30px;
+  font-size: var(--text-15xl);
   font-weight: var(--font-bold);
   background: var(--gradient-hero);
   -webkit-background-clip: text;
@@ -623,7 +623,7 @@
   }
 
   .title {
-    font-size: var(--text-7xl);
+    font-size: var(--text-15xl);
   }
 
   .subtitle {
