@@ -928,11 +928,15 @@
   margin-bottom: var(--space-4);
 }
 
-/* Desktop padding for Features and How It Works */
+/* Desktop padding for Features, How It Works, CTA, and Footer */
 @media (min-width: 1024px) {
   .features,
-  .howItWorks {
+  .howItWorks,
+  .cta {
     padding: 5rem 4rem;
+  }
+  .footer {
+    padding: 4rem 4rem 2rem;
   }
 }
 
