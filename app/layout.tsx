@@ -1,5 +1,22 @@
 import type { Metadata } from 'next';
+import { IBM_Plex_Mono, Manrope, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+
+const sansFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-sans',
+});
+
+const displayFont = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-display',
+});
+
+const monoFont = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
   title: 'iConvert - Convert Images & PDFs Online',
@@ -16,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${sansFont.variable} ${displayFont.variable} ${monoFont.variable}`}>{children}</body>
     </html>
   );
 }

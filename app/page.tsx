@@ -163,6 +163,9 @@ export default function Home() {
   const [isDropzoneActive, setIsDropzoneActive] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [selectionAnchorPage, setSelectionAnchorPage] = useState<number | null>(null);
+  const [focusedOrganizerPage, setFocusedOrganizerPage] = useState<number | null>(null);
+  const pageCardRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   // Undo/Redo history
   const [history, setHistory] = useState<PdfPage[][]>([]);
@@ -193,6 +196,118 @@ export default function Home() {
       setHistoryIndex(historyIndex + 1);
     }
   }, [history, historyIndex]);
+
+  const rotatePdfPageAtIndex = useCallback((index: number) => {
+    setPdfPages((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], rotation: (next[index].rotation + 90) % 360 };
+      saveToHistory(next);
+      return next;
+    });
+  }, [saveToHistory]);
+
+  const deletePdfPageAtIndex = useCallback((index: number) => {
+    setPdfPages((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const removedPage = prev[index];
+      const next = prev.filter((_, i) => i !== index);
+      setSelectedPages((selectedPrev) => selectedPrev.filter((p) => p !== removedPage.originalPageNumber));
+      setFocusedOrganizerPage(next[Math.min(index, next.length - 1)]?.originalPageNumber ?? null);
+      saveToHistory(next);
+      return next;
+    });
+  }, [saveToHistory]);
+
+  const selectOrganizerPage = useCallback((targetPageId: number, options?: { shiftKey?: boolean }) => {
+    const targetIndex = pdfPages.findIndex((page) => page.originalPageNumber === targetPageId);
+    if (targetIndex === -1) return;
+
+    setFocusedOrganizerPage(targetPageId);
+
+    if (options?.shiftKey) {
+      const anchorId = selectionAnchorPage ?? selectedPages[selectedPages.length - 1] ?? targetPageId;
+      const anchorIndex = pdfPages.findIndex((page) => page.originalPageNumber === anchorId);
+      if (anchorIndex !== -1) {
+        const [start, end] = anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
+        setSelectedPages(pdfPages.slice(start, end + 1).map((page) => page.originalPageNumber));
+        return;
+      }
+    }
+
+    setSelectionAnchorPage(targetPageId);
+    setSelectedPages((prev) =>
+      prev.includes(targetPageId)
+        ? prev.filter((pageId) => pageId !== targetPageId)
+        : [...prev, targetPageId]
+    );
+  }, [pdfPages, selectedPages, selectionAnchorPage]);
+
+  const focusOrganizerPageByIndex = useCallback((index: number) => {
+    if (pdfPages.length === 0) return;
+    const boundedIndex = Math.max(0, Math.min(index, pdfPages.length - 1));
+    const page = pdfPages[boundedIndex];
+    if (!page) return;
+    setFocusedOrganizerPage(page.originalPageNumber);
+    pageCardRefs.current[boundedIndex]?.focus();
+  }, [pdfPages]);
+
+  const getOrganizerGridColumnCount = useCallback(() => {
+    const refs = pageCardRefs.current.filter((el): el is HTMLDivElement => Boolean(el));
+    if (refs.length <= 1) return 1;
+    const firstTop = refs[0].offsetTop;
+    let count = 0;
+    for (const ref of refs) {
+      if (ref.offsetTop !== firstTop) break;
+      count += 1;
+    }
+    return Math.max(1, count);
+  }, []);
+
+  const handleOrganizerPageKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, index: number, page: PdfPage) => {
+    const columns = getOrganizerGridColumnCount();
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      focusOrganizerPageByIndex(index + 1);
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      focusOrganizerPageByIndex(index - 1);
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusOrganizerPageByIndex(index + columns);
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusOrganizerPageByIndex(index - columns);
+      return;
+    }
+
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      selectOrganizerPage(page.originalPageNumber, { shiftKey: e.shiftKey });
+      return;
+    }
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deletePdfPageAtIndex(index);
+      return;
+    }
+
+    if (e.key.toLowerCase() === 'r') {
+      e.preventDefault();
+      rotatePdfPageAtIndex(index);
+    }
+  }, [deletePdfPageAtIndex, focusOrganizerPageByIndex, getOrganizerGridColumnCount, rotatePdfPageAtIndex, selectOrganizerPage]);
   
   // Get accepted file types
   const acceptedTypes = ACCEPTED_FILE_TYPES[converterType];
@@ -464,10 +579,23 @@ export default function Home() {
       const next = prev.filter((pageId) => validPageIds.has(pageId));
       return next.length === prev.length ? prev : next;
     });
+
+    pageCardRefs.current = pageCardRefs.current.slice(0, pdfPages.length);
+
+    const validPageIds = new Set(pdfPages.map((page) => page.originalPageNumber));
+    setSelectionAnchorPage((prev) => (prev !== null && validPageIds.has(prev) ? prev : null));
+    setFocusedOrganizerPage((prev) => {
+      if (pdfPages.length === 0) return null;
+      if (prev !== null && validPageIds.has(prev)) return prev;
+      return pdfPages[0].originalPageNumber;
+    });
   }, [pdfPages]);
   
   // Total file size
   const totalSize = files.reduce((acc, f) => acc + f.file.size, 0);
+  const activeConverterOption = CONVERTER_OPTIONS.find((option) => option.value === converterType);
+  const isSingleFileMode = converterType === 'pdf-to-image' || converterType === 'pdf-split' || converterType === 'pdf-organize';
+  const hasWorkspaceContent = files.length > 0 || results.length > 0 || pdfPages.length > 0;
 
   // If showing converter, render the converter interface
   if (showConverter) {
@@ -480,7 +608,16 @@ export default function Home() {
           aria-label="Toggle dark mode"
           title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
-          {theme === 'light' ? '🌙' : '☀️'}
+          {theme === 'light' ? (
+            <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
+          ) : (
+            <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="5" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m19.78 7.78l-1.41-1.41M4.63 4.63L3.22 3.22m16.56 0l-1.41 1.41M4.63 19.37l-1.41 1.41" />
+            </svg>
+          )}
         </button>
 
         {/* Back to Home Button */}
@@ -526,10 +663,43 @@ export default function Home() {
               Convert images and PDFs directly in your browser. No upload to server.
             </p>
           </header>
+
+          <section className={styles.workspaceHero} aria-label="Workspace overview">
+            <div className={styles.workspaceHeroTop}>
+              <div>
+                <p className={styles.workspaceEyebrow}>Workspace</p>
+                <h2 className={styles.workspaceHeading}>{activeConverterOption?.label ?? 'Converter'}</h2>
+                <p className={styles.workspaceSubtext}>
+                  {activeConverterOption?.description ?? 'Configure settings, add files, and convert locally.'}
+                </p>
+              </div>
+            </div>
+            <div className={styles.workspaceStats}>
+              <div className={styles.workspaceChip}>
+                <span className={styles.workspaceChipLabel}>Files</span>
+                <span className={styles.workspaceChipValue}>{files.length}</span>
+              </div>
+              <div className={styles.workspaceChip}>
+                <span className={styles.workspaceChipLabel}>Results</span>
+                <span className={styles.workspaceChipValue}>{results.length}</span>
+              </div>
+              <div className={styles.workspaceChip}>
+                <span className={styles.workspaceChipLabel}>Queue Size</span>
+                <span className={styles.workspaceChipValue}>{formatFileSize(totalSize)}</span>
+              </div>
+              <div className={styles.workspaceChip}>
+                <span className={styles.workspaceChipLabel}>Status</span>
+                <span className={styles.workspaceChipValue}>{isConverting ? 'Working' : 'Ready'}</span>
+              </div>
+            </div>
+          </section>
           
           {/* Converter Type Selector */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Select Conversion Type</h2>
+            <p className={styles.sectionLead}>
+              Choose a tool first. Switching tools resets the current workspace so file types and settings stay valid.
+            </p>
             <div className={styles.converterOptions}>
               {CONVERTER_OPTIONS.map((option) => (
                 <button
@@ -550,6 +720,11 @@ export default function Home() {
           {/* Dropzone */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Upload Files</h2>
+            <p className={styles.sectionLead}>
+              {isSingleFileMode
+                ? 'This tool works with one file at a time. If multiple files are selected, only the first supported file will be used.'
+                : 'Add one or more files. Batch conversion works best when input files use similar settings.'}
+            </p>
             <div
               className={`${styles.dropzone} ${isDropzoneActive ? styles.dropzoneActive : ''}`}
               onDrop={handleDrop}
@@ -590,6 +765,9 @@ export default function Home() {
           {/* Settings Panel */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Settings</h2>
+            <p className={styles.sectionLead}>
+              Tune output behavior for {activeConverterOption?.label ?? 'this tool'} before starting conversion.
+            </p>
             
             {converterType === 'image-to-image' && (
               <div className={styles.settingsPanel}>
@@ -929,12 +1107,29 @@ export default function Home() {
                 )}
 
                 {pdfPages.length > 0 && (
-                  <div className={styles.pdfPagesGrid}>
+                  <div className={styles.organizerHint} role="note" aria-label="Keyboard shortcuts">
+                    <span><kbd>Arrow Keys</kbd> move focus</span>
+                    <span><kbd>Enter</kbd>/<kbd>Space</kbd> select</span>
+                    <span><kbd>Shift</kbd> + select for range</span>
+                    <span><kbd>R</kbd> rotate</span>
+                    <span><kbd>Delete</kbd> remove page</span>
+                  </div>
+                )}
+
+                {pdfPages.length > 0 && (
+                  <div className={styles.pdfPagesGrid} role="grid" aria-label="PDF page organizer">
                     {pdfPages.map((page, index) => (
                       <div
                         key={page.pageNumber}
                         className={`${styles.pdfPageCard} ${selectedPages.includes(page.originalPageNumber) ? styles.pdfPageCardSelected : ''} ${draggedIndex === index ? styles.pdfPageCardDragging : ''} ${dragOverIndex === index ? styles.pdfPageCardDragOver : ''}`}
+                        ref={(el) => {
+                          pageCardRefs.current[index] = el;
+                        }}
                         draggable
+                        role="gridcell"
+                        tabIndex={focusedOrganizerPage === page.originalPageNumber ? 0 : -1}
+                        aria-selected={selectedPages.includes(page.originalPageNumber)}
+                        aria-label={`Page ${page.pageNumber}${selectedPages.includes(page.originalPageNumber) ? ', selected' : ''}`}
                         onDragStart={(e) => {
                           setDraggedIndex(index);
                           e.dataTransfer.effectAllowed = 'move';
@@ -956,18 +1151,17 @@ export default function Home() {
                             const [removed] = newPages.splice(draggedIndex, 1);
                             newPages.splice(index, 0, removed);
                             setPdfPages(newPages);
+                            setFocusedOrganizerPage(removed.originalPageNumber);
                             saveToHistory(newPages);
                           }
                           setDraggedIndex(null);
                           setDragOverIndex(null);
                         }}
-                        onClick={() => {
-                          setSelectedPages(prev => 
-                            prev.includes(page.originalPageNumber)
-                              ? prev.filter((p) => p !== page.originalPageNumber)
-                              : [...prev, page.originalPageNumber]
-                          );
+                        onClick={(e) => {
+                          selectOrganizerPage(page.originalPageNumber, { shiftKey: e.shiftKey });
                         }}
+                        onFocus={() => setFocusedOrganizerPage(page.originalPageNumber)}
+                        onKeyDown={(e) => handleOrganizerPageKeyDown(e, index, page)}
                       >
                         <div 
                           className={styles.pdfPageThumb}
@@ -981,12 +1175,10 @@ export default function Home() {
                             className={styles.pageActionBtn}
                             onClick={(e) => {
                               e.stopPropagation();
-                              const newPages = [...pdfPages];
-                              newPages[index] = { ...page, rotation: (page.rotation + 90) % 360 };
-                              setPdfPages(newPages);
-                              saveToHistory(newPages);
+                              rotatePdfPageAtIndex(index);
                             }}
                             title="Rotate"
+                            type="button"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -996,12 +1188,10 @@ export default function Home() {
                             className={styles.pageActionBtn}
                             onClick={(e) => {
                               e.stopPropagation();
-                              const newPages = pdfPages.filter((_, i) => i !== index);
-                              setPdfPages(newPages);
-                              setSelectedPages((prev) => prev.filter((p) => p !== page.originalPageNumber));
-                              saveToHistory(newPages);
+                              deletePdfPageAtIndex(index);
                             }}
                             title="Delete"
+                            type="button"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1011,7 +1201,7 @@ export default function Home() {
                         {selectedPages.includes(page.originalPageNumber) && (
                           <span className={styles.selectedBadge}>Selected</span>
                         )}
-                        <span className={styles.dragHint}>☰</span>
+                        <span className={styles.dragHint}>Drag</span>
                       </div>
                     ))}
                   </div>
@@ -1019,7 +1209,7 @@ export default function Home() {
                 
                 {pdfPages.length > 0 && (
                   <p className={styles.pageInfo}>
-                    {pdfPages.length} page{pdfPages.length !== 1 ? 's' : ''} • {selectedPages.length} selected
+                    {pdfPages.length} page{pdfPages.length !== 1 ? 's' : ''} | {selectedPages.length} selected
                   </p>
                 )}
               </div>
@@ -1028,20 +1218,37 @@ export default function Home() {
           
           {/* Convert Button */}
           <div className={styles.convertButtonWrapper}>
-            <button
-              className={styles.convertButton}
-              onClick={handleConvert}
-              disabled={files.length === 0 || isConverting}
-            >
-              {isConverting ? (
-                <>
-                  <span className={styles.spinner}></span>
-                  Converting... {progress}%
-                </>
-              ) : (
-                `Convert ${files.length > 0 ? `(${files.length} file${files.length > 1 ? 's' : ''})` : ''}`
-              )}
-            </button>
+            <div className={styles.actionBar}>
+              <div className={styles.primaryActions}>
+                <button
+                  className={styles.convertButton}
+                  onClick={handleConvert}
+                  disabled={files.length === 0 || isConverting}
+                >
+                  {isConverting ? (
+                    <>
+                      <span className={styles.spinner}></span>
+                      Converting... {progress}%
+                    </>
+                  ) : (
+                    `Convert ${files.length > 0 ? `(${files.length} file${files.length > 1 ? 's' : ''})` : ''}`
+                  )}
+                </button>
+                <button
+                  className={styles.workspaceResetButton}
+                  onClick={handleClearFiles}
+                  disabled={!hasWorkspaceContent || isConverting}
+                  type="button"
+                >
+                  Reset Workspace
+                </button>
+              </div>
+              <p className={styles.actionHint}>
+                {converterType === 'pdf-organize'
+                  ? 'Tip: load pages first, then use drag and keyboard shortcuts to reorder and edit.'
+                  : 'All conversion happens in your browser. Files are not uploaded to a server.'}
+              </p>
+            </div>
           </div>
           
           {/* Error Message */}
@@ -1053,7 +1260,7 @@ export default function Home() {
           )}
           
           {/* File List */}
-          {files.length > 0 && (
+          {files.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Files ({files.length})</h2>
@@ -1090,10 +1297,21 @@ export default function Home() {
                 ))}
               </div>
             </section>
+          ) : (
+            <section className={`${styles.section} ${styles.emptySection}`}>
+              <h2 className={styles.sectionTitle}>Files</h2>
+              <div className={styles.emptyState}>
+                <div className={styles.emptyStateIcon} aria-hidden="true">+</div>
+                <p className={styles.emptyStateTitle}>No files added yet</p>
+                <p className={styles.emptyStateText}>
+                  Pick a conversion type, then drag files into the upload area above to start building a queue.
+                </p>
+              </div>
+            </section>
           )}
           
           {/* Results */}
-          {results.length > 0 && (
+          {results.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Results ({results.length})</h2>
@@ -1139,6 +1357,19 @@ export default function Home() {
                 })}
               </div>
             </section>
+          ) : (
+            <section className={`${styles.section} ${styles.emptySection}`}>
+              <h2 className={styles.sectionTitle}>Results</h2>
+              <div className={`${styles.emptyState} ${styles.emptyStateCompact}`}>
+                <div className={styles.emptyStateIcon} aria-hidden="true">↓</div>
+                <p className={styles.emptyStateTitle}>Converted files will appear here</p>
+                <p className={styles.emptyStateText}>
+                  {files.length > 0
+                    ? 'Review your settings and run conversion. You can download files individually or as a ZIP.'
+                    : 'Add files first to unlock conversion and generate download-ready results.'}
+                </p>
+              </div>
+            </section>
           )}
         </div>
       </main>
@@ -1155,7 +1386,16 @@ export default function Home() {
         aria-label="Toggle dark mode"
         title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       >
-        {theme === 'light' ? '🌙' : '☀️'}
+        {theme === 'light' ? (
+          <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          </svg>
+        ) : (
+          <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="5" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m19.78 7.78l-1.41-1.41M4.63 4.63L3.22 3.22m16.56 0l-1.41 1.41M4.63 19.37l-1.41 1.41" />
+          </svg>
+        )}
       </button>
 
       {/* Navigation */}
