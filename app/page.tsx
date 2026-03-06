@@ -105,6 +105,40 @@ const STEPS = [
   }
 ];
 
+// Converter icon components
+const CONVERTER_ICONS: Record<ConverterType, React.ReactNode> = {
+  'image-to-image': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+    </svg>
+  ),
+  'image-to-pdf': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  ),
+  'pdf-to-image': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    </svg>
+  ),
+  'pdf-merge': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+    </svg>
+  ),
+  'pdf-split': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.848 8.25l1.536.887M7.848 8.25a3 3 0 11-5.196-3 3 3 0 015.196 3zm1.536.887a2.165 2.165 0 011.083 1.839c.005.351.054.695.14 1.024M9.384 9.137l2.077 1.199M7.848 15.75l1.536-.887m-1.536.887a3 3 0 11-5.196 3 3 3 0 015.196-3zm1.536-.887a2.165 2.165 0 001.083-1.838c.005-.352.054-.695.14-1.025m-1.223 2.863l2.077-1.199m0-3.328a4.323 4.323 0 012.068-1.379l5.325-1.628a4.5 4.5 0 012.48-.044l.803.215-7.794 4.5m-2.882-1.664A4.331 4.331 0 0010.607 12m3.736 0l7.794 4.5-.802.215a4.5 4.5 0 01-2.48-.043l-5.326-1.629a4.324 4.324 0 01-2.068-1.379M14.343 12l-2.882 1.664" />
+    </svg>
+  ),
+  'pdf-organize': (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+    </svg>
+  ),
+};
+
 // Converter type options
 const CONVERTER_OPTIONS: { value: ConverterType; label: string; description: string }[] = [
   { value: 'image-to-image', label: 'Image to Image', description: 'Convert between PNG, JPG, WebP' },
@@ -601,69 +635,69 @@ export default function Home() {
   if (showConverter) {
     return (
       <main className={styles.main}>
-        {/* Theme Toggle */}
-        <button
-          className={styles.themeToggle}
-          onClick={toggleTheme}
-          aria-label="Toggle dark mode"
-          title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-        >
-          {theme === 'light' ? (
-            <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-            </svg>
-          ) : (
-            <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m19.78 7.78l-1.41-1.41M4.63 4.63L3.22 3.22m16.56 0l-1.41 1.41M4.63 19.37l-1.41 1.41" />
-            </svg>
-          )}
-        </button>
-
-        {/* Back to Home Button */}
-        <button
-          className={styles.backButton}
-          onClick={() => setShowConverter(false)}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Home
-        </button>
-
-        <div className={styles.container}>
-          {/* Header */}
-          <header className={`${styles.header} ${styles.heroHeader}`}>
-            <div className={`${styles.logoContainer} ${styles.heroLogoContainer}`}>
-              <svg className={`${styles.logo} ${styles.heroLogo}`} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Converter Navigation Bar */}
+        <nav className={styles.converterNav}>
+          <div className={styles.converterNavInner}>
+            <button
+              className={styles.converterNavBack}
+              onClick={() => setShowConverter(false)}
+              aria-label="Back to home"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div className={styles.converterNavBrand}>
+              <svg className={styles.converterNavLogo} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="fileGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="cnFileGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#6366f1" />
                     <stop offset="100%" stopColor="#4f46e5" />
                   </linearGradient>
-                  <linearGradient id="fileGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="cnFileGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#818cf8" />
                     <stop offset="100%" stopColor="#6366f1" />
                   </linearGradient>
-                  <linearGradient id="fileGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="cnFileGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#a5b4fc" />
                     <stop offset="100%" stopColor="#818cf8" />
                   </linearGradient>
                 </defs>
-                <path d="M16 12L32 4V28H16V12Z" fill="url(#fileGrad3)" />
-                <path d="M32 4L48 12V28H32V4Z" fill="url(#fileGrad2)" />
-                <path d="M16 28V44L32 52V28H16Z" fill="url(#fileGrad1)" />
+                <path d="M16 12L32 4V28H16V12Z" fill="url(#cnFileGrad3)" />
+                <path d="M32 4L48 12V28H32V4Z" fill="url(#cnFileGrad2)" />
+                <path d="M16 28V44L32 52V28H16Z" fill="url(#cnFileGrad1)" />
                 <path d="M32 28V44L48 52V28H32Z" fill="#4f46e5" />
                 <path d="M26 34L38 34L38 40L26 40L26 34Z" fill="#fbbf24" />
                 <path d="M32 30L36 34H28L32 30Z" fill="#f59e0b" />
               </svg>
+              <span className={styles.converterNavTitle}>iConvert</span>
             </div>
-            <h1 className={`${styles.title} ${styles.heroTitle}`}>iConvert</h1>
-            <p className={`${styles.subtitle} ${styles.heroSubtitle}`}>
-              Convert images and PDFs directly in your browser. No upload to server.
-            </p>
-          </header>
+            <div className={styles.converterNavSpacer} />
+            <div className={styles.converterNavActiveType}>
+              <span className={styles.converterNavActiveDot} />
+              {activeConverterOption?.label}
+            </div>
+            <button
+              className={styles.themeToggle}
+              onClick={toggleTheme}
+              aria-label="Toggle dark mode"
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? (
+                <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              ) : (
+                <svg className={styles.themeIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m19.78 7.78l-1.41-1.41M4.63 4.63L3.22 3.22m16.56 0l-1.41 1.41M4.63 19.37l-1.41 1.41" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </nav>
 
+        <div className={styles.container}>
           <section className={styles.workspaceHero} aria-label="Workspace overview">
             <div className={styles.workspaceHeroTop}>
               <div>
@@ -710,6 +744,7 @@ export default function Home() {
                     handleClearFiles();
                   }}
                 >
+                  <span className={styles.converterOptionIcon}>{CONVERTER_ICONS[option.value]}</span>
                   <span className={styles.converterOptionLabel}>{option.label}</span>
                   <span className={styles.converterOptionDesc}>{option.description}</span>
                 </button>
@@ -1216,6 +1251,19 @@ export default function Home() {
             )}
           </section>
           
+          {/* Progress Bar */}
+          {isConverting && (
+            <div className={styles.progressBarWrapper}>
+              <div className={styles.progressBarTrack}>
+                <div
+                  className={styles.progressBarFill}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className={styles.progressBarLabel}>{progress}% complete</span>
+            </div>
+          )}
+
           {/* Convert Button */}
           <div className={styles.convertButtonWrapper}>
             <div className={styles.actionBar}>
@@ -1231,7 +1279,12 @@ export default function Home() {
                       Converting... {progress}%
                     </>
                   ) : (
-                    `Convert ${files.length > 0 ? `(${files.length} file${files.length > 1 ? 's' : ''})` : ''}`
+                    <>
+                      <svg className={styles.convertIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                      {`Convert ${files.length > 0 ? `(${files.length} file${files.length > 1 ? 's' : ''})` : ''}`}
+                    </>
                   )}
                 </button>
                 <button
@@ -1240,7 +1293,10 @@ export default function Home() {
                   disabled={!hasWorkspaceContent || isConverting}
                   type="button"
                 >
-                  Reset Workspace
+                  <svg className={styles.resetIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+                  </svg>
+                  Reset
                 </button>
               </div>
               <p className={styles.actionHint}>
@@ -1259,11 +1315,19 @@ export default function Home() {
             </div>
           )}
           
+          {/* Files & Results Two-Panel Layout */}
+          <div className={styles.twoPanelLayout}>
+
           {/* File List */}
           {files.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Files ({files.length})</h2>
+                <h2 className={styles.sectionTitle}>
+                  <svg className={styles.sectionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                  </svg>
+                  Files ({files.length})
+                </h2>
                 <span className={styles.fileSize}>{formatFileSize(totalSize)}</span>
                 <button onClick={handleClearFiles} className={styles.clearButton}>Clear All</button>
               </div>
@@ -1314,7 +1378,12 @@ export default function Home() {
           {results.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Results ({results.length})</h2>
+                <h2 className={styles.sectionTitle}>
+                  <svg className={styles.sectionIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Results ({results.length})
+                </h2>
                 {results.length > 1 && (
                   <button onClick={handleDownloadAll} className={styles.downloadAllButton}>
                     Download All (ZIP)
@@ -1371,6 +1440,8 @@ export default function Home() {
               </div>
             </section>
           )}
+
+          </div>{/* End two-panel layout */}
         </div>
       </main>
     );
