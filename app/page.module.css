@@ -101,9 +101,10 @@
 /* Theme Toggle */
 .themeToggle {
   position: fixed;
-  top: var(--space-4);
-  left: var(--space-4);
-  right: auto;
+  bottom: var(--space-6);
+  right: var(--space-4);
+  top: auto;
+  left: auto;
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
@@ -119,10 +120,11 @@
   color: var(--color-text);
 }
 
-/* Keep theme toggle on right for larger screens */
+/* Move theme toggle to top-right for larger screens */
 @media (min-width: 768px) {
   .themeToggle {
-    left: auto;
+    top: var(--space-4);
+    bottom: auto;
     right: var(--space-4);
   }
 }
@@ -3135,6 +3137,17 @@
   transform: translateX(2px);
   color: var(--color-primary);
   border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+/* Mobile layout for hero (<768px) */
+@media (max-width: 767px) {
+  .heroStats {
+    justify-content: center;
+  }
+
+  .heroStat {
+    align-items: center;
+  }
 }
 
 /* Tablet layout for hero (between 768-1024px) */
